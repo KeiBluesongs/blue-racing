@@ -8,20 +8,21 @@
     :root { color-scheme: light dark; }
     body { margin:0; font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial; }
 
-    /* ===== Layout: left track + right controls (portrait-friendly) ===== */
+    /* ===== Layout: left track + right controls ===== */
     #wrap { height:100vh; display:flex; flex-direction:column; }
-    #top {
+    #top{
       flex:1;
       display:flex;
       gap:10px;
       padding:10px;
       padding-top: calc(10px + env(safe-area-inset-top));
       box-sizing:border-box;
+      min-height: 0; /* flex子要素のスクロールを効かせる */
     }
 
     /* Left: track area */
     #trackArea{
-      flex: 0 0 62%;
+      flex: 0 0 70%; /* ←必要ならここを62%/75%などに調整 */
       min-width: 0;
       position:relative;
       border-radius:14px;
@@ -31,16 +32,20 @@
     }
     canvas { width:100%; height:100%; display:block; }
 
-    /* Right: side controls */
+    /* Right: side controls (FIX: scroll + safe-area) */
     #side{
       flex: 1;
       min-width: 0;
       display:flex;
       flex-direction:column;
       gap:10px;
+      overflow: auto; /* ★重要：下が見切れない */
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      min-height: 0;
     }
 
-    .panel {
+    .panel{
       background: color-mix(in srgb, Canvas 88%, transparent);
       border:1px solid color-mix(in srgb, CanvasText 15%, transparent);
       border-radius:12px;
@@ -49,11 +54,24 @@
     }
 
     #status b { font-size:14px; }
-    #status .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:13px; opacity:.95; }
-    #forecastBar { height:10px; border-radius:6px; overflow:hidden; background: color-mix(in srgb, CanvasText 10%, transparent); margin-top:8px; }
-    #forecastFill { height:100%; width:50%; background: currentColor; opacity:.35; }
+    #status .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
+      font-size:13px;
+      opacity:.95;
+    }
+    #forecastBar{
+      height:10px;
+      border-radius:6px;
+      overflow:hidden;
+      background: color-mix(in srgb, CanvasText 10%, transparent);
+      margin-top:8px;
+    }
+    #forecastFill{ height:100%; width:50%; background: currentColor; opacity:.35; }
 
-    .card {
+    .card{
       border:1px solid color-mix(in srgb, CanvasText 12%, transparent);
       border-radius:14px;
       padding:10px;
@@ -62,35 +80,68 @@
     .card h3 { margin:0 0 8px; font-size:14px; }
 
     button, select, input[type="range"] { font-size:16px; }
-    button {
+
+    button{
       width:100%;
       padding:12px 10px;
       border-radius:14px;
       border:1px solid color-mix(in srgb, CanvasText 18%, transparent);
       background: color-mix(in srgb, Canvas 92%, transparent);
+      box-sizing: border-box;
     }
     button:active { transform: scale(0.99); }
 
-    .btnRow { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    label { font-size:13px; opacity:.9; display:block; margin-top:6px; }
-    .inline { display:flex; gap:10px; align-items:center; }
-    .small { font-size:12px; opacity:.85; }
-
-    #tableWrap { margin-top:8px; max-height: 22vh; overflow:auto; border-radius:12px; }
-    table { width:100%; border-collapse:collapse; font-size:13px; }
-    th, td { padding:6px 8px; border-bottom:1px solid color-mix(in srgb, CanvasText 10%, transparent); }
-    th { position:sticky; top:0; background: color-mix(in srgb, Canvas 96%, transparent); text-align:left; }
-
-    .pill {
-      display:inline-block; padding:2px 8px; border-radius:999px;
-      border:1px solid color-mix(in srgb, CanvasText 18%, transparent);
-      font-size:12px; opacity:.95;
+    /* FIX: 幅が足りない時は自動で1列になる（はみ出し防止） */
+    .btnRow{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap:10px;
     }
-    .yflag { color:#a16207; font-weight:700; }
-    .green { color:#166534; font-weight:700; }
 
-    /* Bottom bar (optional) */
-    #footer {
+    label{ font-size:13px; opacity:.9; display:block; margin-top:6px; }
+    .inline{ display:flex; gap:10px; align-items:center; }
+    .small{ font-size:12px; opacity:.85; }
+
+    /* FIX: テーブルが右側を押し潰さない */
+    #tableWrap{
+      margin-top:8px;
+      max-height: 22vh;
+      overflow:auto;
+      border-radius:12px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      table-layout: fixed; /* ★重要 */
+    }
+    th, td{
+      padding:6px 8px;
+      border-bottom:1px solid color-mix(in srgb, CanvasText 10%, transparent);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    th{
+      position:sticky;
+      top:0;
+      background: color-mix(in srgb, Canvas 96%, transparent);
+      text-align:left;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid color-mix(in srgb, CanvasText 18%, transparent);
+      font-size:12px;
+      opacity:.95;
+    }
+    .yflag{ color:#a16207; font-weight:700; }
+    .green{ color:#166534; font-weight:700; }
+
+    /* Footer bar (任意、邪魔なら消してOK) */
+    #footer{
       padding:8px 10px calc(10px + env(safe-area-inset-bottom));
       border-top:1px solid color-mix(in srgb, CanvasText 12%, transparent);
       background: color-mix(in srgb, Canvas 92%, transparent);
@@ -99,9 +150,9 @@
     }
   </style>
 </head>
+
 <body>
 <div id="wrap">
-
   <div id="top">
 
     <!-- LEFT: Track -->
@@ -111,6 +162,7 @@
 
     <!-- RIGHT: Panels -->
     <div id="side">
+
       <div id="status" class="panel">
         <b>Race Status</b>
         <div class="row">
@@ -175,8 +227,8 @@
 
         <button id="reset" style="margin-top:10px;">Restart Race</button>
       </div>
-    </div>
 
+    </div>
   </div>
 
   <div id="footer">You: green(slick) / blue(inter) / yellow(rain)</div>
@@ -186,11 +238,11 @@
 (() => {
   // ---------- Helpers ----------
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp = (a,b,t) => a + (b-a)*t;
-  const rand = (a,b) => a + Math.random()*(b-a);
-  const pick = (arr) => arr[(Math.random()*arr.length)|0];
+  const lerp  = (a,b,t) => a + (b-a)*t;
+  const rand  = (a,b) => a + Math.random()*(b-a);
+  const pick  = (arr) => arr[(Math.random()*arr.length)|0];
 
-  // ---------- Canvas (FIXED: correct DPR handling) ----------
+  // ---------- Canvas ----------
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
 
@@ -211,7 +263,7 @@
     const cy = rect.y + rect.h/2;
     const a = rect.w/2;
     const b = rect.h/2;
-    const ang = (t * Math.PI * 2) - Math.PI/2;
+    const ang = (t * Math.PI * 2) - Math.PI/2; // start at top
     return { x: cx + a*Math.cos(ang), y: cy + b*Math.sin(ang) };
   }
 
@@ -310,6 +362,7 @@
     elCarsN.textContent = N;
   }
 
+  // ---------- Caution logic ----------
   function maybeTriggerCaution() {
     if (flag === "YELLOW") return;
     let totalRisk = 0;
@@ -339,6 +392,7 @@
     }
   }
 
+  // ---------- Weather ----------
   function updateWeather(dt) {
     forecast.nextRainPulse -= dt;
     if (forecast.nextRainPulse <= 0) {
@@ -363,6 +417,7 @@
     elForecastFill.style.width = (weather.rainChance*100).toFixed(0) + "%";
   }
 
+  // ---------- Car performance ----------
   function lapTimeMultiplier(car) {
     const t = tires[car.tireType];
     const wet = weather.wet;
@@ -386,6 +441,7 @@
     return 1.0 / lt;
   }
 
+  // ---------- Pit logic ----------
   function requestPit(car, mode) { car.pitRequest = mode; }
 
   function enterPit(car) {
@@ -414,6 +470,7 @@
     }
   }
 
+  // ---------- AI ----------
   function aiDecide(car) {
     if (car.id === YOU || car.dnf) return;
 
@@ -444,6 +501,7 @@
     else car.paceMode = pick(["normal","normal","push"]);
   }
 
+  // ---------- Update loop ----------
   function update(dt) {
     timeSec += dt;
     updateWeather(dt);
@@ -509,6 +567,7 @@
     draw();
   }
 
+  // ---------- UI ----------
   function updateUI() {
     if (flag === "YELLOW") { elFlagPill.textContent = "YELLOW"; elFlagPill.className = "pill yflag"; }
     else { elFlagPill.textContent = "GREEN"; elFlagPill.className = "pill green"; }
@@ -546,6 +605,7 @@
     elBoard.innerHTML = html;
   }
 
+  // ---------- Controls ----------
   pitNowBtn.addEventListener('click', () => {
     const you = cars[YOU];
     you.pitPlan.tire = tireSel.value;
@@ -566,73 +626,60 @@
   paceSel.addEventListener('change', () => cars[YOU].paceMode = paceSel.value);
   resetBtn.addEventListener('click', () => init());
 
-  // ---------- Drawing (FIXED: always fit inside left panel) ----------
+  // ---------- Drawing (FULL FIT to left panel) ----------
   function draw() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
 
-    ctx.clearRect(0,0,w,h);
+    // いまのctxは dpr transform 済みなので、座標はCSSピクセルでOK
+    ctx.clearRect(0, 0, w, h);
 
-    // Make oval "always visible": use panel size, keep generous margins
-    const pad = 18;
+    // 背景
+    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+    ctx.fillRect(0, 0, w, h);
+
+    // 左パネルいっぱいに楕円を配置（上下左右に最低限の余白だけ）
+    const pad = Math.max(16, Math.min(w, h) * 0.04); // 画面に応じて可変
     const rect = {
       x: pad,
       y: pad,
-      w: w - pad*2,
-      h: h - pad*2
+      w: w - pad * 2,
+      h: h - pad * 2
     };
 
-    // Force oval-ish aspect: slightly taller than wide (NASCAR top-view)
-    // If the panel is too wide/tall, letterbox inside it.
-    const targetAspect = 0.72; // width/height
-    let rw = rect.w, rh = rect.h;
-    const currentAspect = rw / rh;
-
-    if (currentAspect > targetAspect) {
-      // too wide -> reduce width
-      const newW = rh * targetAspect;
-      rect.x += (rw - newW)/2;
-      rect.w = newW;
-    } else {
-      // too tall -> reduce height
-      const newH = rw / targetAspect;
-      rect.y += (rh - newH)/2;
-      rect.h = newH;
-    }
-
-    // background
-    ctx.fillStyle = 'rgba(0,0,0,0.04)';
-    ctx.fillRect(0,0,w,h);
+    // トラックの太さも画面サイズに合わせて可変に（見やすい）
+    const trackStroke = Math.max(14, Math.min(w, h) * 0.06);
+    const innerStroke = Math.max(2, Math.min(w, h) * 0.008);
 
     // track
     ctx.save();
-    ctx.lineWidth = 18;
+    ctx.lineWidth = trackStroke;
     ctx.strokeStyle = 'rgba(80,80,80,0.65)';
     ctx.beginPath();
-    ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2, rect.h/2, 0, 0, Math.PI*2);
+    ctx.ellipse(rect.x + rect.w/2, rect.y + rect.h/2, rect.w/2, rect.h/2, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.lineWidth = 2;
+    ctx.lineWidth = innerStroke;
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.beginPath();
-    ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2-12, rect.h/2-12, 0, 0, Math.PI*2);
+    ctx.ellipse(rect.x + rect.w/2, rect.y + rect.h/2, rect.w/2 - trackStroke*0.45, rect.h/2 - trackStroke*0.45, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    // start/finish
+    // start/finish line at top
     const p0 = trackPoint(0, rect);
     ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = Math.max(3, innerStroke * 1.4);
     ctx.beginPath();
-    ctx.moveTo(p0.x-18, p0.y);
-    ctx.lineTo(p0.x+18, p0.y);
+    ctx.moveTo(p0.x - 18, p0.y);
+    ctx.lineTo(p0.x + 18, p0.y);
     ctx.stroke();
 
     // wet overlay
     if (weather.wet > 0.01) {
       ctx.strokeStyle = `rgba(80,140,255,${0.14 + weather.wet*0.20})`;
-      ctx.lineWidth = 20;
+      ctx.lineWidth = trackStroke + 2;
       ctx.beginPath();
-      ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2, rect.h/2, 0, 0, Math.PI*2);
+      ctx.ellipse(rect.x + rect.w/2, rect.y + rect.h/2, rect.w/2, rect.h/2, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -684,6 +731,7 @@
     ctx.restore();
   }
 
+  // ---------- Main loop ----------
   let last = performance.now();
   function loop(now) {
     const dt = clamp((now - last)/1000, 0, 0.05);
@@ -692,6 +740,7 @@
     requestAnimationFrame(loop);
   }
 
+  // ---------- Boot ----------
   init();
   requestAnimationFrame(loop);
 })();
