@@ -7,41 +7,61 @@
   <style>
     :root { color-scheme: light dark; }
     body { margin:0; font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial; }
-    #wrap { display:flex; flex-direction:column; height:100vh; }
-    #top { flex:1; position:relative; }
-    canvas { width:100%; height:100%; display:block; }
-    #hud {
-      position:absolute; left:10px; top:10px; right:10px;
-      display:flex; gap:10px; align-items:flex-start; pointer-events:none;
+
+    /* ===== Layout: left track + right controls (portrait-friendly) ===== */
+    #wrap { height:100vh; display:flex; flex-direction:column; }
+    #top {
+      flex:1;
+      display:flex;
+      gap:10px;
+      padding:10px;
+      padding-top: calc(10px + env(safe-area-inset-top));
+      box-sizing:border-box;
     }
+
+    /* Left: track area */
+    #trackArea{
+      flex: 0 0 62%;
+      min-width: 0;
+      position:relative;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid color-mix(in srgb, CanvasText 12%, transparent);
+      background: color-mix(in srgb, Canvas 92%, transparent);
+    }
+    canvas { width:100%; height:100%; display:block; }
+
+    /* Right: side controls */
+    #side{
+      flex: 1;
+      min-width: 0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
     .panel {
-      pointer-events:auto;
       background: color-mix(in srgb, Canvas 88%, transparent);
       border:1px solid color-mix(in srgb, CanvasText 15%, transparent);
       border-radius:12px;
       padding:10px;
       backdrop-filter: blur(8px);
     }
-    #status { flex:1; }
+
     #status b { font-size:14px; }
     #status .row { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; font-size:13px; opacity:.95; }
     #forecastBar { height:10px; border-radius:6px; overflow:hidden; background: color-mix(in srgb, CanvasText 10%, transparent); margin-top:8px; }
     #forecastFill { height:100%; width:50%; background: currentColor; opacity:.35; }
-    #controls {
-      padding:10px 10px calc(10px + env(safe-area-inset-bottom));
-      border-top:1px solid color-mix(in srgb, CanvasText 12%, transparent);
-      background: color-mix(in srgb, Canvas 92%, transparent);
-    }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+
     .card {
       border:1px solid color-mix(in srgb, CanvasText 12%, transparent);
       border-radius:14px;
       padding:10px;
+      background: color-mix(in srgb, Canvas 92%, transparent);
     }
     .card h3 { margin:0 0 8px; font-size:14px; }
-    button, select, input[type="range"] {
-      font-size:16px;
-    }
+
+    button, select, input[type="range"] { font-size:16px; }
     button {
       width:100%;
       padding:12px 10px;
@@ -50,31 +70,47 @@
       background: color-mix(in srgb, Canvas 92%, transparent);
     }
     button:active { transform: scale(0.99); }
+
     .btnRow { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     label { font-size:13px; opacity:.9; display:block; margin-top:6px; }
     .inline { display:flex; gap:10px; align-items:center; }
     .small { font-size:12px; opacity:.85; }
-    #tableWrap { margin-top:8px; max-height: 18vh; overflow:auto; border-radius:12px; }
+
+    #tableWrap { margin-top:8px; max-height: 22vh; overflow:auto; border-radius:12px; }
     table { width:100%; border-collapse:collapse; font-size:13px; }
     th, td { padding:6px 8px; border-bottom:1px solid color-mix(in srgb, CanvasText 10%, transparent); }
     th { position:sticky; top:0; background: color-mix(in srgb, Canvas 96%, transparent); text-align:left; }
+
     .pill {
       display:inline-block; padding:2px 8px; border-radius:999px;
       border:1px solid color-mix(in srgb, CanvasText 18%, transparent);
       font-size:12px; opacity:.95;
     }
-    .warn { color: #b45309; }
-    .ok { color: #0f766e; }
     .yflag { color:#a16207; font-weight:700; }
     .green { color:#166534; font-weight:700; }
+
+    /* Bottom bar (optional) */
+    #footer {
+      padding:8px 10px calc(10px + env(safe-area-inset-bottom));
+      border-top:1px solid color-mix(in srgb, CanvasText 12%, transparent);
+      background: color-mix(in srgb, Canvas 92%, transparent);
+      font-size:12px;
+      opacity:.85;
+    }
   </style>
 </head>
 <body>
 <div id="wrap">
-  <div id="top">
-    <canvas id="c"></canvas>
 
-    <div id="hud">
+  <div id="top">
+
+    <!-- LEFT: Track -->
+    <div id="trackArea">
+      <canvas id="c"></canvas>
+    </div>
+
+    <!-- RIGHT: Panels -->
+    <div id="side">
       <div id="status" class="panel">
         <b>Race Status</b>
         <div class="row">
@@ -88,6 +124,7 @@
           <span class="pill">Fuel: <span id="fuelTxt">-</span></span>
           <span class="pill">Tire: <span id="tireTxt">-</span></span>
         </div>
+
         <div class="small" style="margin-top:8px;">
           Forecast (chance of rain soon):
           <div id="forecastBar"><div id="forecastFill"></div></div>
@@ -100,17 +137,12 @@
           </table>
         </div>
       </div>
-    </div>
 
-  </div>
-
-  <div id="controls">
-    <div class="grid">
       <div class="card">
         <h3>Pit Calls</h3>
         <div class="btnRow">
           <button id="pitNow">PIT NOW</button>
-          <button id="pitNext">PIT NEXT LAP</button>
+          <button id="pitNext">PIT NEXT</button>
         </div>
         <button id="cancelPit" style="margin-top:10px;">Cancel Pit</button>
         <div class="small" style="margin-top:8px;">
@@ -144,7 +176,10 @@
         <button id="reset" style="margin-top:10px;">Restart Race</button>
       </div>
     </div>
+
   </div>
+
+  <div id="footer">You: green(slick) / blue(inter) / yellow(rain)</div>
 </div>
 
 <script>
@@ -155,26 +190,28 @@
   const rand = (a,b) => a + Math.random()*(b-a);
   const pick = (arr) => arr[(Math.random()*arr.length)|0];
 
-  // ---------- Canvas ----------
+  // ---------- Canvas (FIXED: correct DPR handling) ----------
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
+
   function resize() {
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.floor(canvas.clientWidth * dpr);
-    canvas.height = Math.floor(canvas.clientHeight * dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    canvas.width  = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    // draw in CSS pixels
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   window.addEventListener('resize', resize);
 
   // ---------- Track geometry (oval) ----------
   function trackPoint(t, rect) {
-    // t: 0..1 around oval built from two semicircles + straights
-    // We'll approximate as parametric ellipse for simplicity.
     const cx = rect.x + rect.w/2;
     const cy = rect.y + rect.h/2;
     const a = rect.w/2;
     const b = rect.h/2;
-    const ang = (t * Math.PI * 2) - Math.PI/2; // start at top
+    const ang = (t * Math.PI * 2) - Math.PI/2;
     return { x: cx + a*Math.cos(ang), y: cy + b*Math.sin(ang) };
   }
 
@@ -206,12 +243,11 @@
   const TOTAL_LAPS = 120;
   const N = 12;
   const YOU = 0;
-  const baseLapTime = 30.0; // seconds at green in clear with good tyres
-  const pitLaneLossGreen = 13.0; // sec
-  const pitLaneLossYellow = 7.0; // sec
-  const fuelCapacity = 1.0; // normalized
-  const fuelBurnPerLap = 0.045; // ~22 laps per tank
-  const refuelRatePerSec = 0.09; // normalized per sec
+  const baseLapTime = 30.0;
+  const pitLaneLossGreen = 13.0;
+  const pitLaneLossYellow = 7.0;
+  const fuelBurnPerLap = 0.045;
+  const refuelRatePerSec = 0.09;
   const tireWearPerLap = 0.03;
 
   const driverNames = [
@@ -219,7 +255,6 @@
     "Jordan", "Logan", "Quinn", "Parker", "Reese", "Sawyer"
   ];
 
-  // Tyre models (grip vs wetness)
   const tires = {
     slick: { name:"Slick", dryGrip: 1.00, wetGrip: 0.55, wearRate: 1.00 },
     inter: { name:"Inter", dryGrip: 0.93, wetGrip: 0.82, wearRate: 1.05 },
@@ -233,15 +268,14 @@
   };
 
   // ---------- State ----------
-  let cars, timeSec, lap, flag, cautionTimer, cautionCause;
-  let weather = { rainChance: 0.25, raining:false, wet:0.0 }; // wet: 0..1
+  let cars, timeSec, flag, cautionTimer, cautionCause;
+  let weather = { rainChance: 0.25, raining:false, wet:0.0 };
   let forecast = { nextRainPulse: rand(25, 55), pulse:0.0 };
 
   function init() {
     resize();
     timeSec = 0;
-    lap = 1;
-    flag = "GREEN"; // GREEN / YELLOW
+    flag = "GREEN";
     cautionTimer = 0;
     cautionCause = "";
     weather = { rainChance: 0.25, raining:false, wet:0.0 };
@@ -252,24 +286,22 @@
       cars.push({
         id:i,
         name: driverNames[i],
-        prog: (1 - i*(1/N))*0.95,   // spread out
-        speed: 0.0,
+        prog: (1 - i*(1/N))*0.95,
         lap: 1,
         fuel: rand(0.78, 0.95),
         tireType: i===YOU ? "slick" : pick(["slick","slick","inter"]),
         tireWear: rand(0.05, 0.22),
         inPit:false,
         pitTimeLeft:0,
-        pitRequest:"NONE", // NONE / NOW / NEXT
+        pitRequest:"NONE",
         pitPlan: { tire:"slick", fuelTarget:0.85 },
         paceMode: i===YOU ? "normal" : pick(["save","normal","normal","push"]),
         damage:0.0,
         dnf:false,
-        lastCross:0,
         gap:0,
       });
     }
-    // Apply UI defaults to YOUR plan
+
     cars[YOU].pitPlan.tire = tireSel.value;
     cars[YOU].pitPlan.fuelTarget = (+fuelRange.value)/100;
     cars[YOU].paceMode = paceSel.value;
@@ -278,26 +310,21 @@
     elCarsN.textContent = N;
   }
 
-  // ---------- Caution logic ----------
   function maybeTriggerCaution() {
     if (flag === "YELLOW") return;
-    // incident risk increases with wetness and tyre mismatch
     let totalRisk = 0;
     for (const car of cars) {
       if (car.dnf || car.inPit) continue;
-      const t = tires[car.tireType];
       const mismatch = weather.wet > 0.6 && car.tireType === "slick" ? 0.035
                      : weather.wet > 0.35 && car.tireType === "slick" ? 0.018
                      : 0.0;
       const worn = car.tireWear > 0.75 ? 0.012 : 0.0;
-      const pm = pace[car.paceMode].riskMul;
-      totalRisk += (0.0018 + mismatch + worn) * pm;
+      totalRisk += (0.0018 + mismatch + worn) * pace[car.paceMode].riskMul;
     }
-    // per second chance (scaled)
     const p = clamp(totalRisk * 0.02, 0, 0.06);
     if (Math.random() < p) {
       flag = "YELLOW";
-      cautionTimer = rand(18, 28); // seconds under caution (short prototype)
+      cautionTimer = rand(18, 28);
       cautionCause = (weather.wet>0.55) ? "Spin in the wet" : "Incident";
     }
   }
@@ -306,16 +333,13 @@
     flag = "GREEN";
     cautionTimer = 0;
     cautionCause = "";
-    // "restart" little spread
     cars.sort((a,b)=>b.prog - a.prog);
     for (let i=0;i<cars.length;i++){
       cars[i].prog = cars[0].prog - i*0.003;
     }
   }
 
-  // ---------- Weather ----------
   function updateWeather(dt) {
-    // forecast pulse (chance of rain soon)
     forecast.nextRainPulse -= dt;
     if (forecast.nextRainPulse <= 0) {
       forecast.pulse = rand(0.2, 1.0);
@@ -324,120 +348,82 @@
       forecast.pulse = Math.max(0, forecast.pulse - dt*0.015);
     }
 
-    // rain toggle chance influenced by forecast pulse
     const targetChance = clamp(0.18 + forecast.pulse*0.65, 0.1, 0.9);
     weather.rainChance = lerp(weather.rainChance, targetChance, dt*0.02);
 
-    // Occasionally start/stop rain
     if (!weather.raining) {
       if (Math.random() < weather.rainChance * dt * 0.0035) weather.raining = true;
     } else {
       if (Math.random() < (0.15) * dt * 0.0045) weather.raining = false;
     }
 
-    // wetness evolves
-    if (weather.raining) {
-      weather.wet = clamp(weather.wet + dt*0.02, 0, 1);
-    } else {
-      weather.wet = clamp(weather.wet - dt*0.012, 0, 1);
-    }
+    if (weather.raining) weather.wet = clamp(weather.wet + dt*0.02, 0, 1);
+    else weather.wet = clamp(weather.wet - dt*0.012, 0, 1);
 
     elForecastFill.style.width = (weather.rainChance*100).toFixed(0) + "%";
   }
 
-  // ---------- Car performance ----------
   function lapTimeMultiplier(car) {
     const t = tires[car.tireType];
     const wet = weather.wet;
     const grip = lerp(t.dryGrip, t.wetGrip, wet);
-    const wearPenalty = 1.0 - (car.tireWear*0.22); // worn = less grip
-    const fuelPenalty = 1.0 - ((car.fuel)*0.05);   // more fuel slightly slower
+    const wearPenalty = 1.0 - (car.tireWear*0.22);
+    const fuelPenalty = 1.0 - ((car.fuel)*0.05);
     const damagePenalty = 1.0 - (car.damage*0.12);
     const paceMul = pace[car.paceMode].paceMul;
 
-    // If slick in wet -> big penalty
     let mismatchPenalty = 1.0;
     if (wet > 0.6 && car.tireType === "slick") mismatchPenalty = 0.72;
     else if (wet > 0.35 && car.tireType === "slick") mismatchPenalty = 0.86;
 
     const effective = clamp(grip*wearPenalty*fuelPenalty*damagePenalty*mismatchPenalty, 0.45, 1.10);
-    // faster => higher effective => lower lap time => higher speed (progress per sec)
     return (1.0 / effective) / paceMul;
   }
 
   function progressPerSecond(car) {
-    const mult = lapTimeMultiplier(car);
-    let lt = baseLapTime * mult;
-
-    if (flag === "YELLOW") {
-      // under caution everyone slows; rain makes it even slower
-      lt *= (1.38 + weather.wet*0.22);
-    }
-
-    return 1.0 / lt; // laps per second
+    let lt = baseLapTime * lapTimeMultiplier(car);
+    if (flag === "YELLOW") lt *= (1.38 + weather.wet*0.22);
+    return 1.0 / lt;
   }
 
-  // ---------- Pit logic ----------
-  function requestPit(car, mode) {
-    car.pitRequest = mode; // NOW / NEXT / NONE
-  }
-
-  function shouldPitThisCross(car) {
-    if (car.pitRequest === "NOW") return true;
-    if (car.pitRequest === "NEXT") {
-      // pit on next start/finish after request
-      return true;
-    }
-    return false;
-  }
+  function requestPit(car, mode) { car.pitRequest = mode; }
 
   function enterPit(car) {
     car.inPit = true;
     car.pitRequest = "NONE";
 
     const loss = (flag === "YELLOW") ? pitLaneLossYellow : pitLaneLossGreen;
-    // Work time depends on fuel needed + tyre change baseline
     const targetFuel = car.pitPlan.fuelTarget;
     const need = Math.max(0, targetFuel - car.fuel);
     const fuelTime = need / refuelRatePerSec;
-    const tireTime = 2.8; // simplified
+    const tireTime = 2.8;
     const repairTime = car.damage > 0.25 ? 2.5 : 0.0;
 
     car.pitTimeLeft = loss + tireTime + fuelTime + repairTime;
   }
 
   function doPitWork(car, dt) {
-    // Spend dt on pit clock; near the end apply changes
     car.pitTimeLeft -= dt;
     if (car.pitTimeLeft <= 0) {
-      // Apply service
       car.tireType = car.pitPlan.tire;
       car.tireWear = 0.0;
-      const targetFuel = car.pitPlan.fuelTarget;
-      car.fuel = clamp(targetFuel, 0, 1);
+      car.fuel = clamp(car.pitPlan.fuelTarget, 0, 1);
       car.damage = Math.max(0, car.damage - 0.35);
       car.inPit = false;
-
-      // Rejoin slightly behind leaders
-      // (simple: drop a little progress)
       car.prog -= (flag === "YELLOW") ? 0.006 : 0.012;
     }
   }
 
-  // ---------- AI strategy ----------
   function aiDecide(car) {
     if (car.id === YOU || car.dnf) return;
 
-    // if fuel low, pit soon (prefer yellow)
     const fuelLapsLeft = car.fuel / fuelBurnPerLap;
     const wet = weather.wet;
 
-    // choose tyres based on wet
     let desired = "slick";
     if (wet > 0.55) desired = "rain";
     else if (wet > 0.28) desired = "inter";
 
-    // under green, pit if < 2.5 laps of fuel, or tyres too worn, or wrong tyre in wet
     const wrongTyre = (wet > 0.5 && car.tireType === "slick") || (wet < 0.15 && car.tireType === "rain");
     const worn = car.tireWear > 0.72;
 
@@ -447,23 +433,19 @@
     if (wrongTyre) wantPit = true;
 
     if (wantPit && car.pitRequest === "NONE" && !car.inPit) {
-      // yellow makes it more attractive
       if (flag === "YELLOW" || Math.random() < 0.55) car.pitRequest = "NOW";
       else car.pitRequest = "NEXT";
       car.pitPlan.tire = desired;
       car.pitPlan.fuelTarget = (flag === "YELLOW") ? 0.82 : 0.90;
     }
 
-    // pace selection
     if (flag === "YELLOW") car.paceMode = "save";
     else if (fuelLapsLeft < 4.0) car.paceMode = "save";
     else car.paceMode = pick(["normal","normal","push"]);
   }
 
-  // ---------- Physics-ish update ----------
   function update(dt) {
     timeSec += dt;
-
     updateWeather(dt);
 
     if (flag === "YELLOW") {
@@ -473,64 +455,37 @@
       maybeTriggerCaution();
     }
 
-    // AI decisions
     for (const car of cars) aiDecide(car);
 
-    // Update cars
     for (const car of cars) {
       if (car.dnf) continue;
 
-      if (car.inPit) {
-        doPitWork(car, dt);
-        continue;
-      }
+      if (car.inPit) { doPitWork(car, dt); continue; }
 
-      // fuel + tire wear
       const pm = pace[car.paceMode];
-      // burn proportional to progress per sec (i.e. speed)
       const pps = progressPerSecond(car);
       const lapsThisSec = pps * dt;
+
       car.fuel = clamp(car.fuel - (fuelBurnPerLap * lapsThisSec * pm.burnMul), 0, 1);
       car.tireWear = clamp(car.tireWear + (tireWearPerLap * lapsThisSec * tires[car.tireType].wearRate * pm.wearMul), 0, 1);
 
-      // if out of fuel -> crawl + huge risk
-      if (car.fuel <= 0.001) {
-        car.damage = clamp(car.damage + dt*0.04, 0, 1);
-      }
-
-      // progress
       let speed = pps;
       if (car.fuel <= 0.001) speed *= 0.35;
 
-      // "bunching" under yellow: gently pull everyone toward leader
       if (flag === "YELLOW") {
-        // leader is max prog in same lap-ish; rubberband
         const leadProg = Math.max(...cars.filter(c=>!c.dnf && !c.inPit).map(c=>c.prog));
         const gap = leadProg - car.prog;
-        // if far behind, slightly faster; if ahead (shouldn't) slightly slower
         speed *= clamp(1 + gap*0.6, 0.80, 1.25);
       }
 
       car.prog += speed * dt;
 
-      // start/finish crossing & lap count
       if (car.prog >= car.lap) {
         car.lap += 1;
-
-        // auto pit entry decision at S/F if requested
-        if (car.pitRequest !== "NONE") {
-          // For "NEXT", consume request at first opportunity
-          enterPit(car);
-        }
-
-        // If race over
-        if (car.lap > TOTAL_LAPS) {
-          car.prog = TOTAL_LAPS + 0.999;
-          car.dnf = true; // treat as finished
-        }
+        if (car.pitRequest !== "NONE") enterPit(car);
+        if (car.lap > TOTAL_LAPS) { car.prog = TOTAL_LAPS + 0.999; car.dnf = true; }
       }
 
-      // incident chance (green only; yellow incident already modeled by trigger)
       if (flag === "GREEN" && !car.inPit && car.lap <= TOTAL_LAPS) {
         const wet = weather.wet;
         let mismatch = 0;
@@ -540,9 +495,7 @@
 
         const risk = (0.00022 + mismatch) * pace[car.paceMode].riskMul;
         if (Math.random() < risk * dt) {
-          // small damage
           car.damage = clamp(car.damage + rand(0.08, 0.22), 0, 1);
-          // sometimes spins -> triggers caution immediately
           if (Math.random() < (0.18 + wet*0.45)) {
             flag = "YELLOW";
             cautionTimer = rand(16, 26);
@@ -552,55 +505,32 @@
       }
     }
 
-    // If YOU requested NEXT, convert to NONE after first crossing attempt:
-    // (Simpler: "NEXT" means pit on next S/F; we already pit when request exists at crossing.)
-    // We'll keep as is.
-
-    // Update UI + draw
     updateUI();
     draw();
   }
 
-  // ---------- UI glue ----------
   function updateUI() {
-    // flag
-    if (flag === "YELLOW") {
-      elFlagPill.textContent = "YELLOW";
-      elFlagPill.className = "pill yflag";
-    } else {
-      elFlagPill.textContent = "GREEN";
-      elFlagPill.className = "pill green";
-    }
+    if (flag === "YELLOW") { elFlagPill.textContent = "YELLOW"; elFlagPill.className = "pill yflag"; }
+    else { elFlagPill.textContent = "GREEN"; elFlagPill.className = "pill green"; }
 
-    // weather text
     elWet.textContent = Math.round(weather.wet*100) + "%";
     elWx.textContent = weather.raining ? "Rain" : "Clear";
 
-    // lap shown = leader lap (approx)
     const leader = cars.reduce((a,b)=> (a.prog>b.prog? a:b));
     const shownLap = clamp(Math.floor(leader.prog) + 1, 1, TOTAL_LAPS);
     elLap.textContent = shownLap;
 
-    // you status
     const you = cars[YOU];
     elFuelTxt.textContent = Math.round(you.fuel*100) + "%";
     elTireTxt.textContent = tires[you.tireType].name + (you.inPit ? " (PIT)" : "");
 
-    // leaderboard by progress
     const alive = cars.slice().sort((a,b)=>b.prog - a.prog);
-    const yourPos = alive.findIndex(c=>c.id===YOU) + 1;
-    elYPos.textContent = yourPos;
+    elYPos.textContent = alive.findIndex(c=>c.id===YOU) + 1;
 
-    // compute gaps (seconds) vs leader, based on lap time estimate
     const lead = alive[0];
     const leadPps = progressPerSecond(lead);
-    for (const c of alive) {
-      const diffLaps = (lead.prog - c.prog);
-      const sec = diffLaps / leadPps;
-      c.gap = sec;
-    }
+    for (const c of alive) c.gap = (lead.prog - c.prog) / leadPps;
 
-    // render board
     let html = "";
     for (let i=0;i<alive.length;i++) {
       const c = alive[i];
@@ -609,15 +539,9 @@
       if (c.inPit) st = "PIT";
       else if (c.id===YOU && c.pitRequest!=="NONE") st = "PIT " + c.pitRequest;
       else if (c.damage>0.45) st = "DMG";
-      else st = "";
 
       const mark = (c.id===YOU) ? "👉 " : "";
-      html += `<tr>
-        <td>${mark}${i+1}</td>
-        <td>${c.name}</td>
-        <td>${gapTxt}</td>
-        <td>${st}</td>
-      </tr>`;
+      html += `<tr><td>${mark}${i+1}</td><td>${c.name}</td><td>${gapTxt}</td><td>${st}</td></tr>`;
     }
     elBoard.innerHTML = html;
   }
@@ -638,32 +562,43 @@
     requestPit(you, "NEXT");
   });
 
-  cancelPitBtn.addEventListener('click', () => {
-    const you = cars[YOU];
-    you.pitRequest = "NONE";
-  });
-
+  cancelPitBtn.addEventListener('click', () => cars[YOU].pitRequest = "NONE");
   paceSel.addEventListener('change', () => cars[YOU].paceMode = paceSel.value);
-
   resetBtn.addEventListener('click', () => init());
 
-  // ---------- Drawing ----------
+  // ---------- Drawing (FIXED: always fit inside left panel) ----------
   function draw() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
 
     ctx.clearRect(0,0,w,h);
 
-    // track rect
+    // Make oval "always visible": use panel size, keep generous margins
     const pad = 18;
-    const trackW = Math.min(w - pad*2, 420);
-    const trackH = Math.min(h - pad*2 - 90, 520);
     const rect = {
-      x: (w-trackW)/2,
-      y: (h-trackH)/2 + 10,
-      w: trackW,
-      h: trackH
+      x: pad,
+      y: pad,
+      w: w - pad*2,
+      h: h - pad*2
     };
+
+    // Force oval-ish aspect: slightly taller than wide (NASCAR top-view)
+    // If the panel is too wide/tall, letterbox inside it.
+    const targetAspect = 0.72; // width/height
+    let rw = rect.w, rh = rect.h;
+    const currentAspect = rw / rh;
+
+    if (currentAspect > targetAspect) {
+      // too wide -> reduce width
+      const newW = rh * targetAspect;
+      rect.x += (rw - newW)/2;
+      rect.w = newW;
+    } else {
+      // too tall -> reduce height
+      const newH = rw / targetAspect;
+      rect.y += (rh - newH)/2;
+      rect.h = newH;
+    }
 
     // background
     ctx.fillStyle = 'rgba(0,0,0,0.04)';
@@ -671,21 +606,21 @@
 
     // track
     ctx.save();
-    ctx.lineWidth = 16;
-    ctx.strokeStyle = 'rgba(80,80,80,0.55)';
+    ctx.lineWidth = 18;
+    ctx.strokeStyle = 'rgba(80,80,80,0.65)';
     ctx.beginPath();
     ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2, rect.h/2, 0, 0, Math.PI*2);
     ctx.stroke();
 
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.beginPath();
-    ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2-10, rect.h/2-10, 0, 0, Math.PI*2);
+    ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2-12, rect.h/2-12, 0, 0, Math.PI*2);
     ctx.stroke();
 
-    // start/finish line at top
+    // start/finish
     const p0 = trackPoint(0, rect);
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(p0.x-18, p0.y);
@@ -694,14 +629,14 @@
 
     // wet overlay
     if (weather.wet > 0.01) {
-      ctx.strokeStyle = `rgba(80,140,255,${0.12 + weather.wet*0.18})`;
-      ctx.lineWidth = 18;
+      ctx.strokeStyle = `rgba(80,140,255,${0.14 + weather.wet*0.20})`;
+      ctx.lineWidth = 20;
       ctx.beginPath();
       ctx.ellipse(rect.x+rect.w/2, rect.y+rect.h/2, rect.w/2, rect.h/2, 0, 0, Math.PI*2);
       ctx.stroke();
     }
 
-    // caution banner on track
+    // caution banner
     if (flag === "YELLOW") {
       ctx.fillStyle = 'rgba(255,200,0,0.18)';
       ctx.fillRect(rect.x, rect.y + rect.h*0.45, rect.w, rect.h*0.10);
@@ -712,59 +647,43 @@
 
     // cars
     const order = cars.slice().sort((a,b)=>b.prog - a.prog);
-    for (const car of order) {
+    for (let k=0;k<order.length;k++) {
+      const car = order[k];
       if (car.dnf) continue;
+
       const t = car.prog % 1;
       const p = trackPoint(t, rect);
 
-      // small offset by position to show pack
-      const idx = order.indexOf(car);
-      const off = (idx%6 - 2.5) * 2.2;
+      const off = (k%6 - 2.5) * 2.2;
       const x = p.x + off;
       const y = p.y + off*0.4;
 
-      // car dot
       const isYou = car.id === YOU;
-      const r = isYou ? 5.2 : 4.2;
+      const r = isYou ? 5.4 : 4.3;
 
-      // color by tyre
       let col = 'rgba(255,255,255,0.85)';
       if (car.tireType === "slick") col = isYou ? 'rgba(40,180,120,0.95)' : 'rgba(255,255,255,0.8)';
       if (car.tireType === "inter") col = isYou ? 'rgba(80,140,255,0.95)' : 'rgba(150,190,255,0.8)';
       if (car.tireType === "rain")  col = isYou ? 'rgba(255,210,80,0.95)' : 'rgba(255,220,120,0.78)';
 
       ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI*2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
 
       if (car.inPit) {
         ctx.strokeStyle = 'rgba(255,120,120,0.9)';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x, y, r+2.4, 0, Math.PI*2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, r+2.4, 0, Math.PI*2); ctx.stroke();
       }
-
       if (isYou) {
-        // outline
         ctx.strokeStyle = 'rgba(0,0,0,0.35)';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(x, y, r+1.8, 0, Math.PI*2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, r+1.9, 0, Math.PI*2); ctx.stroke();
       }
     }
 
     ctx.restore();
-
-    // mini legend
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.font = '12px -apple-system, system-ui';
-    ctx.fillText('You: green(slick) / blue(inter) / yellow(rain)', 12, h - 12);
   }
 
-  // ---------- Main loop ----------
   let last = performance.now();
   function loop(now) {
     const dt = clamp((now - last)/1000, 0, 0.05);
@@ -773,10 +692,8 @@
     requestAnimationFrame(loop);
   }
 
-  // ---------- Boot ----------
   init();
   requestAnimationFrame(loop);
-
 })();
 </script>
 </body>
